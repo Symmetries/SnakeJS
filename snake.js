@@ -212,5 +212,5 @@ function draw_frame() {
 	}
 }
 
-setInterval(draw_frame, 60);
+setInterval(draw_frame, 80);
 
