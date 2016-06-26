@@ -1,132 +1,185 @@
-class Ball {
-    constructor(x, y, r, vx, vy, color) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
-        this.vx = vx;
-        this.vy = vy;
-        this.color = color;
-    }
-    get mass() {
-        var density = 1;
-        return density*Math.PI*this.r*this.r;
-    }
-    get v() {
-        return [this.vx, this.vy];
-    }
-    
-    dis(other) {
-        var dx = this.x - other.x;
-        var dy = this.y - other.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-    update(canvas, Balls, start) {
-        for (var i = start + 1; i < Balls.length; i++) {
-            var other = Balls[i];
-            if (this.dis(other) < this.r + other.r) {
-                //collison code goes here
-                var res = [this.vx - other.vx, this.vy - other.vy];
-                if (res[0] *(other.x - this.x) + res[1] * (other.y - this.y) >= 0 ) {
-                    this.color = 'rgb(' + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ")"
-                    other.color = 'rgb(' + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ")"
-                    var m1 = this.mass
-                    var m2 = other.mass
-                    var theta = -Math.atan2(other.y - this.y, other.x - this.x);
-                    var v1 = rotate(this.v, theta);
-                    var v2 = rotate(other.v, theta);
-                    var u1 = rotate([v1[0] * (m1 - m2)/(m1 + m2) + v2[0] * 2 * m2/(m1 + m2), v1[1]], -theta);
-                    var u2 = rotate([v2[0] * (m2 - m1)/(m1 + m2) + v1[0] * 2 * m1/(m1 + m2), v2[1]], -theta);
-                    
-                    this.vx = u1[0];
-                    this.vy = u1[1];
-                    other.vx = u2[0];
-                    other.vy = u2[1];
-                }
-            }
-        }
-        if (this.x - this.r <= 0) {
-            this.x = this.r;
-        } 
-        if (this.x + this.r >= canvas.width) {
-            this.x = canvas.width - this.r;
-        }
-        if ((this.x - this.r <= 0 && this.vx < 0) || (this.x + this.r >= canvas.width && this.vx > 0)) {
-            this.vx = -this.vx;
-        }
-        if (this.y - this.r <= 0) {
-            this.y = this.r;
-        }
-        if (this.y + this.r >= canvas.height) {
-            this.y = canvas.height - this.r;
-        }
-        if ((this.y - this.r <= 0 && this.vy < 0) || (this.y + this.r >= canvas.height && this.vy > 0)) {
-            this.vy = -this.vy;
-        }
-        this.x += this.vx
-        this.y += this.vy
-    }
-    
-    draw(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x,this.y,this.r,0,2*Math.PI);
-        ctx.fillStyle = this.color;
-        ctx.fill()
-        ctx.stroke();
-    }
+function new_game() {
+	myGame.snake = {x: 3, y:1, vx: 1, vy: 0, body: [[2, 1], [1, 1]], len: 2, growing: false};
+	new_fruit();
 }
 
-function rotate(v, theta) {
-    return [v[0] * Math.cos(theta) - v[1] * Math.sin(theta), v[0] * Math.sin(theta) + v[1] * Math.cos(theta)];
+function set_screen() {
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+	myGame.ctx.canvas.width  = width;
+	myGame.ctx.canvas.height = height;
+	myGame.ctx.clearRect(0, 0, width, height);
+	myGame.borderx = (width/2) % myGame.side + myGame.side
+	myGame.bordery = (height/2) % myGame.side + myGame.side
+	myGame.n = (width - 2 * myGame.borderx) / myGame.side;
+	myGame.m = (height - 2 * myGame.bordery) / myGame.side;
 }
 
-window.requestAnimFrame = (function(callback) {
-    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-    function(callback) {
-        window.setTimeout(callback, 1000 / 60);
-    };
-})();
+function set_pixel(x, y, color) {
+	myGame.ctx.beginPath();
+	myGame.ctx.rect(myGame.borderx + myGame.side * x + myGame.grid_width, myGame.bordery + myGame.side * y + myGame.grid_width ,myGame.side - 2 * myGame.grid_width, myGame.side - 2 * myGame.grid_width);
+	myGame.ctx.fillStyle = color;
+	myGame.ctx.fill();
+	myGame.ctx.closePath();
+}
 
-function animate(Balls, canvas, ctx) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.canvas.width  = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
-    for (i = 0 ; i < Balls.length; i++) {
-        Balls[i].update(canvas, Balls.slice(0), i);
-        Balls[i].draw(ctx);
-    }
-    
-    requestAnimFrame(function() {
-        animate(Balls, canvas, ctx)
-    });
+function new_fruit() {
+	var x;
+	var y;
+	var ok;
+	ok = false;
+	while (!ok) {
+		ok = true;
+		x = Math.floor(Math.random() * myGame.n);
+		y = Math.floor(Math.random() * myGame.m);
+		if (x === myGame.snake.x && y === myGame.snake.y) ok = false;
+		for (var i = 0; i < myGame.snake.len; i++ ) {
+			if (x === myGame.snake.body[i][0] && y === myGame.snake.body[i][1]) ok = false;
+		}
+	}
+	myGame.fruit = [x, y];
 }
-var canvas = document.getElementById('myCanvas');
-var ctx = canvas.getContext('2d');
-var num = 150;
-var Balls = [];
-ctx.canvas.width  = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
-for (var i = 1; i <= num; i++) {
-    var min = Math.min(canvas.height, canvas.width);
-    var vx = Math.floor((0.5 - Math.random()) * min/100);
-    var vy = Math.floor((0.5 - Math.random()) * min/100);
-    var ok = false;
-    while (!ok) {
-        var minr = min/80
-        var maxr = min/40
-        var r = Math.floor(Math.random() * (maxr - minr)) + minr;
-        var x = Math.floor(Math.random() * (canvas.width-2*r)) + r;
-        var y = Math.floor(Math.random() * (canvas.height-2*r)) + r;
-        
-        
-        color = 'rgb(' + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ")"
-        var ball = new Ball(x, y, r, vx, vy, color);
-        
-        ok = true;
-        for (var j = 0; j < Balls.length; j++) {
-            if (Balls[j].dis(ball) < ball.r + Balls[j].r) ok = false;
-        }
-    }
-    Balls.push(ball);
+
+function update() {
+	if (myGame.rightPressed && myGame.snake.vx === 0 && !(myGame.upPressed || myGame.downPressed)) {
+		myGame.snake.vx = 1;
+		myGame.snake.vy = 0;
+	} else if (myGame.leftPressed && myGame.snake.vx === 0 && !(myGame.upPressed || myGame.downPressed)) {
+		myGame.snake.vx = -1;
+		myGame.snake.vy = 0;
+	} else if (myGame.upPressed && myGame.snake.vy === 0 && !(myGame.rightPressed || myGame.leftPressed)){
+		myGame.snake.vx = 0;
+		myGame.snake.vy = -1;
+	} else if (myGame.downPressed && myGame.snake.vy === 0 && !(myGame.rightPressed || myGame.leftPressed)) {
+		myGame.snake.vx = 0;
+		myGame.snake.vy = 1;
+	}
+	if (myGame.snake.x === myGame.fruit[0] && myGame.snake.y === myGame.fruit[1]) {
+		new_fruit();
+		myGame.snake.growing = true;
+	}
+	if (myGame.snake.growing) {
+		myGame.snake.len += 1;
+		if ((myGame.snake.len + 1) % 3 === 0) myGame.snake.growing = false;
+	}
+	for (var i = myGame.snake.len-1; i > 0;  i-- ) {
+		myGame.snake.body[i] = myGame.snake.body[i - 1];
+	}
+	myGame.snake.body[0] = [myGame.snake.x, myGame.snake.y]
+	myGame.snake.x += myGame.snake.vx;
+	myGame.snake.y += myGame.snake.vy;
+	
+	for (var i = 0; i < myGame.snake.len; i++) {
+		if (myGame.snake.x === myGame.snake.body[i][0] && myGame.snake.y === myGame.snake.body[i][1]) new_game()
+	}
+	if (myGame.snake.x < 0 || myGame.snake.x > myGame.n - 1 || myGame.snake.y < 0 || myGame.snake.y > myGame.m - 1) new_game()
+	
+	myGame.downPressed = false;
+	myGame.rightPressed = false;
+	myGame.upPressed = false;
+	myGame.leftPressed = false;
 }
-animate(Balls, canvas, ctx);
+
+function draw_background() {
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+	myGame.ctx.beginPath();
+	myGame.ctx.rect(0, 0, width, height);
+	myGame.ctx.fillStyle = "#00FF00";
+	myGame.ctx.fill();
+	myGame.ctx.closePath();
+
+	myGame.ctx.beginPath();
+	myGame.ctx.rect(myGame.borderx, myGame.bordery, width - 2 * myGame.borderx, height - 2 * myGame.bordery);
+	myGame.ctx.fillStyle = "green";
+	myGame.ctx.fill();
+	myGame.ctx.closePath();
+}
+
+function draw_pixels() {
+	for (var i = 0; i < myGame.n; i++ ) {
+		for (var j = 0; j < myGame.m; j++) {
+			set_pixel(i, j, "#DDDDDD");
+		}
+	}
+}
+
+function draw_snake() {
+	//head
+	set_pixel(myGame.snake.x, myGame.snake.y, "black");
+	//body
+	for (var i = 0; i < myGame.snake.len; i++) {
+		set_pixel(myGame.snake.body[i][0], myGame.snake.body[i][1], "black");
+	}
+}
+
+function draw_fruit() {
+	set_pixel(myGame.fruit[0], myGame.fruit[1], "red");
+}
+
+document.addEventListener("keydown", keyDownHandler, false);
+//document.addEventListener("keyup", keyUpHandler, false);
+
+function keyDownHandler(e) {
+	if (e.keyCode == 40) {
+		myGame.downPressed = true;
+	}
+  if(e.keyCode == 39) {
+      myGame.rightPressed = true;
+  }
+	else if (e.keyCode == 38) {
+		myGame.upPressed = true;
+	}
+  else if(e.keyCode == 37) {
+      myGame.leftPressed = true;
+  }
+}
+function keyUpHandler(e) {
+	if (e.keyCode == 40) {
+		myGame.downPressed = false;
+	}
+  if(e.keyCode == 39) {
+      myGame.rightPressed = false;
+  }
+	else if (e.keyCode == 38) {
+		myGame.upPressed = false;
+	}
+  else if(e.keyCode == 37) {
+      myGame.leftPressed = false;
+  }
+}
+
+var myGame = {
+	canvas: document.getElementById('myCanvas'),
+	ctx: document.getElementById('myCanvas').getContext('2d'),
+	rightPressed: false,
+	leftPressed: false,
+	upPressed: false,
+	downPressed: false,
+	snake: {x: 1, y:1, vx: 1, vy: 0, body: [], len: 3},
+	fruit: [],
+	side: 40,
+	borderx: 0,
+	bordery: 0,
+	grid_width: 2,
+	n: 0,
+	m: 0
+}
+
+myGame.ctx.canvas.width  = window.innerWidth;
+myGame.ctx.canvas.height = window.innerHeight;
+
+set_screen();
+new_game();
+
+function draw_frame() {
+	update();
+	set_screen();
+	draw_background();
+	draw_pixels();
+ 	draw_snake();
+ 	draw_fruit();
+}
+
+setInterval(draw_frame, 80);
 
