@@ -151,7 +151,7 @@ var myGame = {
 	downPressed: false,
 	snake: {x: 1, y:1, vx: 1, vy: 0, body: [], len: 4},
 	fruit: [],
-	side: 21,
+	side: 20,
 	borderx: 0,
 	bordery: 0,
 	grid_width: 1,
@@ -212,5 +212,5 @@ function draw_frame() {
 	}
 }
 
-setInterval(draw_frame, 60);
+setInterval(draw_frame, 50);
 
