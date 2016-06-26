@@ -1,5 +1,5 @@
 function new_game() {
-	myGame.snake = {x: 3, y:1, vx: 1, vy: 0, body: [[2, 1], [1, 1]], len: 2, growing: false};
+	myGame.snake = {x: 5, y:1, vx: 1, vy: 0, body: [[4, 1], [3, 1], [2, 1], [1, 1]], len: 4, growing: false};
 	new_fruit();
 }
 
@@ -60,7 +60,7 @@ function update() {
 	}
 	if (myGame.snake.growing) {
 		myGame.snake.len += 1;
-		if ((myGame.snake.len + 1) % 3 === 0) myGame.snake.growing = false;
+		if ((myGame.snake.len + 1) % 5 === 0) myGame.snake.growing = false;
 	}
 	for (var i = myGame.snake.len-1; i > 0;  i-- ) {
 		myGame.snake.body[i] = myGame.snake.body[i - 1];
@@ -85,7 +85,7 @@ function draw_background() {
 	var height = window.innerHeight;
 	myGame.ctx.beginPath();
 	myGame.ctx.rect(0, 0, width, height);
-	myGame.ctx.fillStyle = "#00FF00";
+	myGame.ctx.fillStyle = "#808080";
 	myGame.ctx.fill();
 	myGame.ctx.closePath();
 
@@ -114,11 +114,18 @@ function draw_snake() {
 }
 
 function draw_fruit() {
-	set_pixel(myGame.fruit[0], myGame.fruit[1], "red");
+	color = "red";
+	if (myGame.snake.len + 6 > myGame.goal) color = "yellow"
+	set_pixel(myGame.fruit[0], myGame.fruit[1], color);
+}
+
+function draw_text() {
+	myGame.ctx.fillStyle = "black";
+	myGame.ctx.font = String(myGame.side) + "px Arial";
+	myGame.ctx.fillText("Length: " + String(myGame.snake.len + 1), myGame.borderx, myGame.side);
 }
 
 document.addEventListener("keydown", keyDownHandler, false);
-//document.addEventListener("keyup", keyUpHandler, false);
 
 function keyDownHandler(e) {
 	if (e.keyCode == 40) {
@@ -134,20 +141,6 @@ function keyDownHandler(e) {
       myGame.leftPressed = true;
   }
 }
-function keyUpHandler(e) {
-	if (e.keyCode == 40) {
-		myGame.downPressed = false;
-	}
-  if(e.keyCode == 39) {
-      myGame.rightPressed = false;
-  }
-	else if (e.keyCode == 38) {
-		myGame.upPressed = false;
-	}
-  else if(e.keyCode == 37) {
-      myGame.leftPressed = false;
-  }
-}
 
 var myGame = {
 	canvas: document.getElementById('myCanvas'),
@@ -156,14 +149,16 @@ var myGame = {
 	leftPressed: false,
 	upPressed: false,
 	downPressed: false,
-	snake: {x: 1, y:1, vx: 1, vy: 0, body: [], len: 3},
+	snake: {x: 1, y:1, vx: 1, vy: 0, body: [], len: 4},
 	fruit: [],
-	side: 40,
+	side: 21,
 	borderx: 0,
 	bordery: 0,
-	grid_width: 2,
+	grid_width: 1,
 	n: 0,
-	m: 0
+	m: 0,
+	count: 0,
+	goal: 100
 }
 
 myGame.ctx.canvas.width  = window.innerWidth;
@@ -173,13 +168,49 @@ set_screen();
 new_game();
 
 function draw_frame() {
+	if (myGame.snake.len < myGame.goal) {
 	update();
 	set_screen();
 	draw_background();
 	draw_pixels();
  	draw_snake();
  	draw_fruit();
+	draw_text();
+	}
+	else {
+	set_screen();
+	draw_background();
+	draw_pixels();
+	lA = [0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1];
+	lE = [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1];
+	lG = [0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0];
+	lH = [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1];
+	lI = [1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1];
+	lL = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1];
+	lM = [1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1];
+	lO = [0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0];
+	lP = [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0];
+	lR = [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1];
+	lT = [1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0];
+	lU = [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0];
+	lW = [1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0];
+	lY = [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0];
+	coma = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0];
+	question = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0];
+	space = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	message = [lM, lA, lR, lA, coma, space, space, space, space, space, lW, lI, lL, lL, space, lY, lO, lU, space, space, lG, lO, space, lT, lO, space, lP, lR, lO, lM, lW, lI, lT, lH, space, lM, lE, question];
+	for (var i = 0; i < myGame.count; i++) {
+		for (var j = 0; j < message[i].length; j++) {
+			if (message[i][j] === 1) {
+				color = "black"
+				if (i < 4 || i === 35 || i === 36) color = "red";
+				set_pixel(1 + j % 5 + 6 * (i % 10), 1 + Math.floor(j/5) + 6 * Math.floor(i/10), color);
+			}
+		}
+	}
+	if (myGame.count < message.length) myGame.count += 1;
+	}
 }
 
-setInterval(draw_frame, 80);
+setInterval(draw_frame, 60);
 
